@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import WebFontFile from "./webfontfile";
 
 //make a new game scene
 export default class Game extends Phaser.Scene {
@@ -10,9 +11,17 @@ export default class Game extends Phaser.Scene {
     this.leftScore = 0
     this.rightScore = 0
   }
-  preload() {}
+  preload() {
+    const fonts = new WebFontFile(this.load,'Press Start 2P')
+    this.load.addFile(fonts)
+  }
   //create stuff for our game scene
   create() {
+
+    //add a line in the middle
+    this.add.line(400,250,0,0,0,500,0xfffff,1)
+    //add a circle on the line
+    this.add.circle(400,250,100).setStrokeStyle(3,0xfffff,1)
     //setting extra bounds to make to make the ball able to go past the bounds behind the player (in order to score)
     this.physics.world.setBounds(-100, 0, 1000, 500);
 
@@ -20,14 +29,18 @@ export default class Game extends Phaser.Scene {
     this.ball = this.add.circle(400, 250, 10, 0xfffff, 1);
     //adding physics to our ball
     this.physics.add.existing(this.ball);
+    //make the ball have circle physics
+    this.ball.body.setCircle(10)
     //make the ball bounce
     this.ball.body.setBounce(1, 1);
     //make the ball collide with bounderies
     this.ball.body.setCollideWorldBounds(true, 1, 1);
 
-    //reseting the ball to make drop at a random number
+    //reseting the ball to make drop at a random number delayed by one second
     //see method below
-    this.resetBall();
+    this.time.delayedCall(1000,()=>{
+      this.resetBall();
+    })
 
     //make a left paddle for the player (static=true)
     this.paddleLeft = this.add.rectangle(50, 250, 30, 100, 0xfffff, 1);
@@ -44,11 +57,13 @@ export default class Game extends Phaser.Scene {
     //adding score text for player
     this.leftScoreText = this.add.text(300, 125, "0", {
       fontSize: 40,
+      fontFamily: '"Press Start 2P"'
     }).setOrigin(0.5,0.5)
 
     //adding score text for ai
     this.rightScoreText = this.add.text(500, 375, "0", {
       fontSize: 40,
+      fontFamily: '"Press Start 2P"'
     }).setOrigin(0.5,0.5)
 
     //this is necessary to be able to use cursers to control the our paddle
@@ -75,7 +90,7 @@ export default class Game extends Phaser.Scene {
     //this is the differce in y locations between the ai paddle and the ball
     const diff = this.ball.y - this.paddleRight.y;
 
-    //if the ball is in the middle of the board dont the paddle
+    //if the ball is in the middle of the board dont move the paddle
     if (Math.abs(diff) < 10) {
       return;
     }
@@ -85,16 +100,9 @@ export default class Game extends Phaser.Scene {
     //by adding acceleration instead of pure top speed
     if (diff < 0) {
       this.paddleRightVelocity.y = -aiSpeed;
-      if(this.paddleRightVelocity.y<-10){
-        this.paddleRightVelocity.y=-10
-      }
-
-      //->if diff is negative move the ai paddle down
+    //->if diff is negative move the ai paddle down
     } else if (diff > 0) {
       this.paddleRightVelocity.y = aiSpeed;
-      if(this.paddleRightVelocity.y>10){
-        this.paddleRightVelocity.y=10
-      }
     }
 
     //move the paddle according to the y velocity of the vector
