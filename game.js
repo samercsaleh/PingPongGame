@@ -1,15 +1,24 @@
 import Phaser from "phaser";
 import WebFontFile from "./webfontfile";
+import GameOver from "./gameover";
 
+const GameState = {
+  running: 'running',
+  playerWon: 'player-won',
+  aiWon: 'ai-won'
+}
 //make a new game scene
 export default class Game extends Phaser.Scene {
   init() {
+
+    this.gameState = GameState.running
     //accelate to max velocity instead giving it max velocity directly
     //make a new vector
     this.paddleRightVelocity = new Phaser.Math.Vector2(0, 0);
 
     this.leftScore = 0
     this.rightScore = 0
+    this.paused = false
   }
   preload() {
     const fonts = new WebFontFile(this.load,'Press Start 2P')
@@ -75,6 +84,10 @@ export default class Game extends Phaser.Scene {
     /**@type {Phaser.Physics.Arcade.StaticBody} */
     const body = this.paddleLeft.body;
 
+    if (this.paused || this.gameState !== GameState.running){
+      return
+    }
+
     if (this.cursors.up.isDown) {
       //move the paddle up
       this.paddleLeft.y -= 10;
@@ -111,18 +124,44 @@ export default class Game extends Phaser.Scene {
     this.paddleRight.body.updateFromGameObject();
 
     //scoring system
-    if (this.ball.x < -30) {
+    const x = this.ball.x
+    const leftBounds = -30
+    const rightBounds = 830
+
+    if (x >= leftBounds && x <= rightBounds){
+      return
+    }
+    if (this.ball.x < leftBounds) {
       //scored on player side
+      this.rightScore += 1
+      this.rightScoreText.text = this.rightScore
+    } else if (this.ball.x > rightBounds) {
+      //scored on ai side
       this.leftScore += 1
       this.leftScoreText.text = this.leftScore
+    }
+    const maxScore = 3
+    if (this.leftScore>=maxScore){
+      //player wins
+      this.gameState=GameState.playerWon
+    } else if(this.rightScore>=maxScore){
+      //gameover
+      this.gameState=GameState.aiWon
+    }
+    if(this.gameState === GameState.running){
       this.resetBall();
-    } else if (this.ball.x > 830) {
-      //scored on ai side
-      this.rightScore += 1
-      this.rightScoreText.text = this.leftScore
-      this.resetBall();
+    }else{
+      this.ball.active = false
+      this.physics.world.remove(this.ball.body)
+
+      // show gameover/win screen
+      this.scene.start('game-over',{
+        leftScore: this.leftScore,
+        rightScore: this.rightScore
+      })
     }
   }
+
 
   resetBall() {
     //reseting the ball either at start of game or after scoring
@@ -133,7 +172,7 @@ export default class Game extends Phaser.Scene {
     //convert angle to a vector to give it velocity(because we need x,y number)
     //use conversion method to that
     //pass in speed to make it directional vector
-    const vec = this.physics.velocityFromAngle(angle, 200);
+    const vec = this.physics.velocityFromAngle(angle, 370);
     //make the ball move at the random angle when ball drops
     this.ball.body.setVelocity(vec.x, vec.y);
   }

@@ -17,6 +17,10 @@ export default class TitleScreen extends Phaser.Scene{
       fontSize:10,
       fontFamily:'"Press Start 2P"'
     })
+    this.add.text(550,400,"by SamerSaleh",{
+      fontSize:8,
+      fontFamily:'"Press Start 2P"',
+    })
     //press space to start game scene
     this.input.keyboard.on('keydown-SPACE',()=>{
       this.scene.start('game')
